@@ -21,13 +21,13 @@
 #define MITTE_VORNE_STOP 0b11111100
 #define MITTE_HINTEN_STOP 0b11110011
 
-int wmotor = 1;
+int wmotor = 0;
 int incomingByte = 0;
 int zielGeschwMotor [2];
 int momentanGeschwMotor[2];
 int startGeschwMotor [2];
 int x [2];
-int xMax = 100000;
+int xMax = 100;
 bool manuellInterrupt = false;
 
 
@@ -43,8 +43,8 @@ void setup() {
 
 void loop() {
   readSerial();
+  geschwMotor0();
   geschwMotor1();
-  geschwMotor2();
   if (digitalRead(INTERRUPT_MANUELL_PIN) == HIGH) {
     manuellInterrupt = true;
     interrupt();
@@ -57,25 +57,28 @@ void loop() {
 void readSerial() {
   if (Serial.available() > 0 ) {
     incomingByte  = Serial.read();
-    if (wmotor == 1) {
+    if (incomingByte > 127) {
+      incomingByte -= 128;
+    }
+    if (wmotor == 0) {
       zielGeschwMotor [0] = incomingByte * 4;
       Serial.write(momentanGeschwMotor [0]);
       startGeschwMotor [0] = momentanGeschwMotor [0];
       x[0] = 0;
-      wmotor = 2;
+      wmotor = 1;
     } else {
       zielGeschwMotor [1] = incomingByte * 4;
       Serial.write(momentanGeschwMotor [1]);
       startGeschwMotor [1] = momentanGeschwMotor [1];
       x[1] = 0;
-      wmotor = 1;
+      wmotor = 0;
     }
   }
 }
 
 //-------------------------------------------------------------------------------------------------------------------------------------
 
-void geschwMotor1() {
+void geschwMotor0() {
   if (momentanGeschwMotor [0] != momentanGeschwMotor [0]) {
     if (abs(zielGeschwMotor [0] - momentanGeschwMotor [0]) < 5) {
       momentanGeschwMotor [0] = zielGeschwMotor [0];
@@ -93,7 +96,7 @@ void geschwMotor1() {
   }
 }
 
-void geschwMotor2() {
+void geschwMotor1() {
   if (momentanGeschwMotor [1] != momentanGeschwMotor [1]) {
     if (abs(zielGeschwMotor [1] - momentanGeschwMotor [1]) < 5) {
       momentanGeschwMotor [1] = zielGeschwMotor [1];
@@ -153,7 +156,11 @@ void sendinterrupt() {
 //-------------------------------------------------------------------------------------------------------------------------------------
 
 void serialPrintGeschw() {
-  Serial.print("Zeit ");
+  Serial.print("ZielGeschw ");
+  Serial.print(zielGeschwMotor[0]);
+  Serial.print(" ");
+  Serial.print(zielGeschwMotor[1]);
+  Serial.print(" Zeit ");
   Serial.print(x[0]);
   Serial.print(" ");
   Serial.print(x[1]);
