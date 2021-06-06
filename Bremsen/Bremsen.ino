@@ -42,23 +42,19 @@ void setup() {
 }
 
 void loop() {
-
   readSerial();
   geschwMotor1();
   geschwMotor2();
-
   if (digitalRead(INTERRUPT_MANUELL_PIN) == HIGH) {
     manuellInterrupt = true;
     interrupt();
   }
-
-  seerialPrintGeschw ();
+  serialPrintGeschw ();
 }
 
 //-------------------------------------------------------------------------------------------------------------------------------------
 
 void readSerial() {
-
   if (Serial.available() > 0 ) {
     incomingByte  = Serial.read();
     if (wmotor == 1) {
