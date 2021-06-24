@@ -4,30 +4,32 @@
 #define MOTOR_1_PIN 14
 #define MOTOR_DIR_0_PIN 4
 #define MOTOR_DIR_1_PIN 12
-/* #define INTERRUPT_PIN 2
-  #define INTERRUPT_MANUELL_PIN 10
+/* #define INTERRUPT_PIN 13
+  #define INTERRUPT_MANUELL_PIN 15
 
   #define SENSOR_LINKS_VORNE_PIN 3
-  #define SENSOR_LINKS_HINTEN_PIN 4
-  #define SENSOR_RECHTS_VORNE_PIN 5
-  #define SENSOR_RECHTS_HINTEN_PIN 6
-  #define SENSOR_MITTE_VORNE_PIN 7
-  #define SENSOR_MITTE_HINTEN_PIN 8
+  #define SENSOR_LINKS_HINTEN_PIN 6
+  #define SENSOR_RECHTS_VORNE_PIN 7
+  #define SENSOR_RECHTS_HINTEN_PIN 8
+  #define SENSOR_MITTE_VORNE_PIN 9
+  #define SENSOR_MITTE_HINTEN_PIN 10 */
 
   #define LINKS_VORNE_STOP 0b11001100
   #define LINKS_HINTEN_STOP 0b11000011
   #define RECHTS_VORNE_STOP 0b00111100
   #define RECHTS_HINTEN_STOP 0b00110011
   #define MITTE_VORNE_STOP 0b11111100
-  #define MITTE_HINTEN_STOP 0b11110011 */
+  #define MITTE_HINTEN_STOP 0b11110011 
 
-int wmotor = 0;
 int incomingByte = 0;
 int zielGeschwMotor [2];
-double momentanGeschwMotor[2];
+float momentanGeschwMotor[2];
 bool manuellInterrupt = false;
 long letzterBefehlZeit = 0;
-float tau = 0.01;
+double maxValueChange=0.8;
+double smoothness=20;
+int x = 0;
+float tau = 0.002;
 
 void setup() {
   Serial.begin(9600);
@@ -36,81 +38,53 @@ void setup() {
   pinMode(MOTOR_1_PIN, OUTPUT);
   pinMode(MOTOR_DIR_0_PIN, OUTPUT);
   pinMode(MOTOR_DIR_1_PIN, OUTPUT);
- // analogWriteFreq(333);
+  analogWriteFreq(333);
   pinMode(13, OUTPUT);
 }
 
 void loop() {
   readSerial();
-  geschwMotor0();
-  geschwMotor1();
+  geschwMotor(0, MOTOR_DIR_0_PIN, MOTOR_0_PIN);
+  geschwMotor(1, MOTOR_DIR_1_PIN, MOTOR_1_PIN);
   if (millis() - letzterBefehlZeit > 5000) {
     zielGeschwMotor[0] = 0;
     zielGeschwMotor[1] = 0;
   }
-  /* geschwMotor0();
-    geschwMotor1();
-    if (digitalRead(INTERRUPT_MANUELL_PIN) == HIGH) {
-     manuellInterrupt = true;
-     interrupt();
-    }
-    serialPrintGeschw ();*/
 }
 
 //-------------------------------------------------------------------------------------------------------------------------------------
 
-void readSerial() {
+  void readSerial() {
   if (Serial.available() > 0 ) {
     incomingByte  = Serial.read();
-    if (wmotor == 0) {
-      digitalWrite(13, HIGH);
-      zielGeschwMotor [0] = *(int8_t*)&incomingByte ;
-      wmotor = 1;
-      letzterBefehlZeit = millis();
-
-    } else {
-      zielGeschwMotor [1] = *(int8_t*)&incomingByte;
-      wmotor = 0;
-      letzterBefehlZeit = millis();
-    }
+    x = x % 2;
+    zielGeschwMotor [x] = *(int8_t*)&incomingByte;
+    zielGeschwMotor [x] *= 2;
+    x++;
+    letzterBefehlZeit = millis();
   }
 }
+   
 
 //-------------------------------------------------------------------------------------------------------------------------------------
 
-void geschwMotor0() {
-  if (abs(zielGeschwMotor[0] - momentanGeschwMotor[0]) < 4) {
-    momentanGeschwMotor [0] = zielGeschwMotor [0];
+void geschwMotor(int motor, int pinDir, int pin) {
+  if (abs(zielGeschwMotor[motor] - momentanGeschwMotor[motor]) < 4) {
+    momentanGeschwMotor [motor] = zielGeschwMotor [motor];
   }
   else {
-    momentanGeschwMotor[0] += (int) ((zielGeschwMotor[0]-momentanGeschwMotor[0]) * tau * 1/(1+exp(0.02 * (abs(zielGeschwMotor[0]-momentanGeschwMotor[0])-100))));
+    momentanGeschwMotor[motor] += constrain(((double)zielGeschwMotor[motor]-momentanGeschwMotor[motor])/smoothness,-maxValueChange,maxValueChange);
+    //momentanGeschwMotor[motor] += ((zielGeschwMotor[motor] - momentanGeschwMotor[motor]) * tau * 1 / (1 + exp( 0.02 * (abs(zielGeschwMotor[motor] - momentanGeschwMotor[motor]) - 100))));
   }
 
-  if (momentanGeschwMotor [0] < 0) {
-    digitalWrite(MOTOR_DIR_0_PIN, LOW);
+  if (momentanGeschwMotor [motor] < 0) {
+    digitalWrite(pinDir, LOW);
   }
   else {
-    digitalWrite(MOTOR_DIR_0_PIN, HIGH);
+    digitalWrite(pinDir, HIGH);
   }
-  analogWrite(MOTOR_0_PIN, abs(momentanGeschwMotor [0]));
+  analogWrite(pin, abs(momentanGeschwMotor [motor]));
 
-}
-
-void geschwMotor1() {
-  if (abs(zielGeschwMotor[1] - momentanGeschwMotor[1]) < 4) {
-    momentanGeschwMotor [1] = zielGeschwMotor [1];
-  }
-  else {
-    momentanGeschwMotor[1] += (int) ((zielGeschwMotor[1]-momentanGeschwMotor[1]) * tau * 1/(1+exp(0.02 * (abs(zielGeschwMotor[1]-momentanGeschwMotor[1])-100))));
-  }
-
-  if (momentanGeschwMotor [1] < 0) {
-    digitalWrite(MOTOR_DIR_1_PIN, LOW);
-  }
-  else {
-    digitalWrite(MOTOR_DIR_1_PIN, HIGH);
-  }
-  analogWrite(MOTOR_1_PIN, abs(momentanGeschwMotor [1]));
 }
 
 //-------------------------------------------------------------------------------------------------------------------------------------
@@ -152,5 +126,3 @@ void geschwMotor1() {
   Serial.write(woStop);
   }
 */
-
-//-------------------------------------------------------------------------------------------------------------------------------------
