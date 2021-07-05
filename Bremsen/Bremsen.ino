@@ -26,20 +26,31 @@ int zielGeschwMotor [2];
 float momentanGeschwMotor[2];
 bool manuellInterrupt = false;
 long letzterBefehlZeit = 0;
-double maxValueChange=0.8;
-double smoothness=20;
+double maxValueChange = 0.8;
+double smoothness = 20;
 int x = 0;
 float tau = 0.002;
 
 void setup() {
   Serial.begin(9600);
-  // attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN), interrupt, RISING);
+  
+  /* pinMode(INTERRUPT_PIN, INPUT);
+  attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN), interrupt, RISING);
+  pinMode(INTERRUPT_MANUELL_PIN, INPUT);
+  
+  pinMode(SENSOR_LINKS_VORNE_PIN, INPUT);
+  pinMode(SENSOR_LINKS_HINTEN_PIN, INPUT);
+  pinMode(SENSOR_RECHTS_VORNE_PIN, INPUT);
+  pinMode(SENSOR_RECHTS_HINTEN_PIN, INPUT);
+  pinMode(SENSOR_MITTE_VORNE_PIN, INPUT);
+  pinMode(SENSOR_MITTE_HINTEN_PIN, INPUT);  */
+  
   pinMode(MOTOR_0_PIN, OUTPUT);
   pinMode(MOTOR_1_PIN, OUTPUT);
   pinMode(MOTOR_DIR_0_PIN, OUTPUT);
   pinMode(MOTOR_DIR_1_PIN, OUTPUT);
+  
   analogWriteFreq(333);
-  pinMode(13, OUTPUT);
 }
 
 void loop() {
